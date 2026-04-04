@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Shop Shop</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<header>
+    <h2>🛍️ Shop Shop</h2>
+
+    <div class="cart-icon" onclick="openCart()">
+        🛒 (<span id="cart-count">0</span>)
+        | <span id="cart-total">0</span> บาท
+    </div>
+</header>
+
+<!-- SEARCH -->
+<form method="GET">
+    <input type="text" name="q" placeholder="ค้นหาชื่อสินค้า">
+    <input type="text" name="category" placeholder="หมวดหมู่">
+    <button type="submit">ค้นหา</button>
+</form>
+
+<!-- CATEGORY -->
+<div class="menu" style="text-align:center;">
+    <a href="?">ทั้งหมด</a>
+    <a href="?category=electronics">📱</a>
+    <a href="?category=fashion">👕</a>
+    <a href="?category=food">🍔</a>
+    <a href="?category=home">🏠</a>
+    <a href="?category=beauty">💄</a>
+    <a href="?category=gaming">🎮</a>
+</div>
+
+<!-- PRODUCTS -->
+<div class="products">
+    {% for p in products %}
+    <div class="card">
+        <img src="{{ p.image }}">
+        <h3>{{ p.name }}</h3>
+        <p>{{ p.price }} บาท</p>
+        <p>{{ p.category }}</p>
+
+       <button 
+    data-name="{{ p.name }}" 
+    data-price="{{ p.price }}" 
+    onclick="addToCart(this.dataset.name, this.dataset.price)">
+    🛒 ใส่ตะกร้า
+</button>
+    </div>
+    {% empty %}
+    <p>ไม่มีสินค้า</p>
+    {% endfor %}
+</div>
+
+<!-- POPUP -->
+<div id="cartModal" class="modal">
+    <div class="modal-content">
+        <h2>🛒 ตะกร้าสินค้า</h2>
+
+        <div id="cart-items"></div>
+
+        <h3>รวม: <span id="total-price">0</span> บาท</h3>
+
+        <button onclick="checkout()">💳 ชำระเงิน</button>
+        <button onclick="closeCart()">ปิด</button>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-section">
+            <h3>🛍️ Shop Shop</h3>
+            <p>เว็บขายของสุดชิล ราคาดี มีครบทุกอย่าง</p>
+        </div>
+
+        <div class="footer-section">
+            <h4>เมนู</h4>
+            <a href="/">หน้าแรก</a><br>
+            <a href="?category=electronics">สินค้า</a><br>
+            <a href="#">ติดต่อเรา</a>
+        </div>
+
+        <div class="footer-section">
+            <h4>ติดต่อ</h4>
+            <p>📞 080-904-3589</p>
+            <p>📧 shopshop@email.com</p>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        © 2026 Shop Shop | All Rights Reserved
+    </div>
+</footer>
+
+<script>
+// โหลดตะกร้าจาก localStorage
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+// save
+function saveCart() {
+    localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+// add
+function addToCart(name, price) {
+    price = Number(price);
+
+    let found = cart.find(item => item.name === name);
+
+    if (found) {
+        found.qty += 1;
+    } else {
+        cart.push({name, price, qty: 1});
+    }
+
+    saveCart();
+    updateCart();
+}
+
+// update
+function updateCart() {
+    let count = 0;
+    let total = 0;
+
+    cart.forEach(item => {
+        count += item.qty;
+        total += item.price * item.qty;
+    });
+
+    document.getElementById("cart-count").innerText = count;
+    document.getElementById("cart-total").innerText = total.toLocaleString();
+}
+
+// remove
+function removeItem(index) {
+    cart.splice(index, 1);
+    saveCart();
+    openCart();
+    updateCart();
+}
+
+// open
+function openCart() {
+    document.getElementById("cartModal").style.display = "flex";
+
+    let html = "";
+    let total = 0;
+
+    if (cart.length === 0) {
+        html = "<p>ไม่มีสินค้า</p>";
+    } else {
+        cart.forEach((item, index) => {
+            let itemTotal = item.price * item.qty;
+            total += itemTotal;
+
+            html += `
+                <div style="display:flex; justify-content:space-between; margin:5px 0;">
+                    <span>${item.name} x${item.qty}</span>
+                    <span>${itemTotal.toLocaleString()} บาท</span>
+                    <button onclick="removeItem(${index})">❌</button>
+                </div>
+            `;
+        });
+    }
+
+    document.getElementById("cart-items").innerHTML = html;
+    document.getElementById("total-price").innerText = total.toLocaleString();
+}
+
+// close
+function closeCart() {
+    document.getElementById("cartModal").style.display = "none";
+}
+
+// checkout
+function checkout() {
+    if (cart.length === 0) {
+        alert("ยังไม่มีสินค้า");
+        return;
+    }
+
+    alert("ชำระเงินสำเร็จ");
+
+    cart = [];
+    saveCart();
+    updateCart();
+    closeCart();
+}
+
+// โหลดตอนเปิดหน้า
+updateCart();
+</script>
+
+</body>
+</html>
